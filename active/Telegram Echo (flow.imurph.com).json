@@ -1,0 +1,67 @@
+{
+  "name": "Telegram Echo (flow.imurph.com)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "telegram",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -336,
+        -16
+      ],
+      "id": "37c5020f-d7c7-4ecb-9e8b-faf28cdcbe8a",
+      "name": "Webhook",
+      "webhookId": "03e0c540-6d73-4c55-8a4b-5dcb472a4a12"
+    },
+    {
+      "parameters": {},
+      "id": "a5a92906-fbcb-4773-b70a-9a22a369f23f",
+      "name": "Prep (chat_id + text)",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        16,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "6708539136",
+        "text": "hello",
+        "additionalFields": {}
+      },
+      "id": "ec7b1e0d-1d4c-4bd5-a478-a3bff511ebab",
+      "name": "Telegram Send",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        -224,
+        -192
+      ],
+      "webhookId": "911f5cf8-823a-45fb-9b00-e189063b81b1",
+      "credentials": {
+        "telegramApi": {
+          "id": "ylH516mE9kFYzyua",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {},
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "837af8a6-b672-4996-89ff-a311e213bb93",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7a3f4b30d139bb4d4da62ccf6bec8aefe503a6057c743693063b0411d7afe9d0"
+  },
+  "id": "LOPWHj8dzinXcrCi",
+  "tags": []
+}

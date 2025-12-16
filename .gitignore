@@ -1,0 +1,12 @@
+# Mac system files
+.DS_Store
+
+# Environment variables and secrets
+.env
+.env.local
+*.env
+*.log
+
+# Any personal notes or credentials
+credentials.txt
+secrets/

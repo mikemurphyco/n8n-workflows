@@ -1,0 +1,158 @@
+{
+  "name": "Telegram Tutorial Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "1f2608c1-acd3-4faf-abd3-802340d950d5",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -528,
+        -96
+      ],
+      "webhookId": "telegram-tutorial-webhook",
+      "credentials": {
+        "telegramApi": {
+          "id": "ylH516mE9kFYzyua",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.message.text }}",
+              "operation": "startsWith",
+              "value2": "Tutorial:"
+            }
+          ]
+        }
+      },
+      "id": "107eef40-4677-4dfc-806b-129b0472bd11",
+      "name": "Filter Tutorial Messages",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -304,
+        -96
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract the tutorial idea from the message\nconst messageText = $input.item.json.message.text;\nconst tutorialIdea = messageText.replace(/^Tutorial:\\s*/i, '').trim();\n\n// Create the markdown content\nconst markdown = `# ${tutorialIdea}\n\n## Hook\n*Start with an engaging question or statement that captures attention*\n\n---\n\n## Introduction\n*Briefly introduce the topic and what readers will learn*\n\n- Context about the topic\n- Why this matters\n- What you'll accomplish\n\n---\n\n## Steps\n\n### Step 1: [First Major Step]\n*Describe the first key step*\n\n### Step 2: [Second Major Step]\n*Describe the second key step*\n\n### Step 3: [Third Major Step]\n*Describe the third key step*\n\n---\n\n## Conclusion\n*Summarize key takeaways and next steps*\n\n- Key point 1\n- Key point 2\n- What to do next\n\n---\n\n*Generated on: ${new Date().toISOString().split('T')[0]}*\n`;\n\n// Create safe filename\nconst filename = tutorialIdea\n  .toLowerCase()\n  .replace(/[^a-z0-9]+/g, '-')\n  .replace(/^-|-$/g, '')\n  .substring(0, 50) + '.md';\n\nreturn {\n  json: {\n    chatId: $input.item.json.message.chat.id,\n    tutorialIdea: tutorialIdea,\n    markdown: markdown,\n    filename: filename\n  }\n};"
+      },
+      "id": "f0e10086-5dea-45b8-967e-c924e65d1307",
+      "name": "Generate Markdown",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -80,
+        -96
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "rtf",
+        "binaryPropertyName": "=data {$jso{{ $json.markdown }}n.markdown{ $json.filename }}",
+        "options": {}
+      },
+      "id": "15cab271-ecd8-4e74-b59c-d9fae695bbbf",
+      "name": "Convert to File",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        144,
+        -96
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "sendDocument",
+        "chatId": "6708539136",
+        "binaryData": true,
+        "additionalFields": {}
+      },
+      "id": "ab215494-9ef6-4d51-bcf4-5be0cda3d9ec",
+      "name": "Send Document to Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.1,
+      "position": [
+        352,
+        -96
+      ],
+      "webhookId": "fe8d52f0-ec41-4f60-b5e7-aef436359d4c",
+      "credentials": {
+        "telegramApi": {
+          "id": "ylH516mE9kFYzyua",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Filter Tutorial Messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Tutorial Messages": {
+      "main": [
+        [
+          {
+            "node": "Generate Markdown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Markdown": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Send Document to Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "47043186-93ea-4db0-804c-03c28efb6d75",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7a3f4b30d139bb4d4da62ccf6bec8aefe503a6057c743693063b0411d7afe9d0"
+  },
+  "id": "x0vvtiWSFvNzgU8B",
+  "tags": []
+}

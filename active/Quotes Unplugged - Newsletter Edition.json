@@ -1,0 +1,182 @@
+{
+  "name": "Quotes Unplugged - Newsletter Edition",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://dummyjson.com/quotes/random",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+            }
+          ]
+        },
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "timeout": 30000
+        }
+      },
+      "id": "349ae6a2-7ae3-4ab2-9ee4-ad1ec9065330",
+      "name": "Get Quote",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -144,
+        -96
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "f024fbb1-4481-4297-8dc8-043399a0bf2a",
+      "name": "Format Quote",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.2,
+      "position": [
+        288,
+        -96
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "=6708539136",
+        "text": "={{ $json[\"formattedQuote\"] + \"\\n\\n✂️ COPY-PASTE VERSION:\\n\" + $json[\"plainTextQuote\"] }}",
+        "additionalFields": {}
+      },
+      "id": "302a3c7a-2ecc-461b-98fe-a65abaec2235",
+      "name": "Send Telegram Message",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        512,
+        -96
+      ],
+      "webhookId": "ff5de594-c1cc-4a08-b099-f3a1ae7b074e",
+      "credentials": {
+        "telegramApi": {
+          "id": "ylH516mE9kFYzyua",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Log the complete input for debugging\nconsole.log(\"Complete input received:\", $input.item);\n\n// Get the raw response data\nconst responseData = $input.item.json;\nconsole.log(\"Response data:\", responseData);\n\n// Check what format the API returns\nlet quoteText, authorName;\n\n// Try all possible data structures\nif (responseData.quote && responseData.author) {\n  // DummyJSON format\n  console.log(\"Found DummyJSON format\");\n  quoteText = responseData.quote;\n  authorName = responseData.author;\n} else if (responseData.content && responseData.author) {\n  // Quotable format\n  console.log(\"Found Quotable format\");\n  quoteText = responseData.content;\n  authorName = responseData.author;\n} else if (Array.isArray(responseData) && responseData[0]) {\n  // ZenQuotes format\n  console.log(\"Found ZenQuotes array format\");\n  quoteText = responseData[0].q || responseData[0].quote || responseData[0].text;\n  authorName = responseData[0].a || responseData[0].author;\n} else {\n  // Unknown format - create fallback\n  console.log(\"No recognized format, using fallback quote\");\n  quoteText = \"Life is what happens when you're busy making other plans.\";\n  authorName = \"John Lennon\";\n}\n\n// Create the formatted outputs\nconst formattedQuote = `💡 QUOTE FOR YOUR NEWSLETTER:\\n\\n${quoteText}\\n\\n— ${authorName || 'Unknown'} —`;\nconst plainTextQuote = `\"${quoteText}\" — ${authorName || 'Unknown'}`;\n\n// Log the final output for debugging\nconsole.log(\"Final formatted quote:\", formattedQuote);\nconsole.log(\"Final plain text quote:\", plainTextQuote);\n\n// Return both formats\nreturn {\n  json: {\n    formattedQuote: formattedQuote,\n    plainTextQuote: plainTextQuote\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        64,
+        -96
+      ],
+      "id": "921032b7-91f6-4dbb-b490-cd742b1dae7b",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -336,
+        -96
+      ],
+      "id": "b284460f-59cc-4977-bc19-3de763dfbe31",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -336,
+        -288
+      ],
+      "id": "7485a49e-9fbc-421b-bf62-cf0cd7fc6c59",
+      "name": "Telegram Trigger",
+      "webhookId": "0067d89e-f71d-4293-b38c-d73f77162c5e",
+      "credentials": {
+        "telegramApi": {
+          "id": "ylH516mE9kFYzyua",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get Quote": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Quote": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Format Quote",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get Quote",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Quote",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "4d5a45fd-690b-47e6-bac6-5dbcd61537e3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7a3f4b30d139bb4d4da62ccf6bec8aefe503a6057c743693063b0411d7afe9d0"
+  },
+  "id": "Hq9VocD0b1W296gb",
+  "tags": []
+}

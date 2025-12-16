@@ -1,0 +1,152 @@
+{
+  "name": "Ollama Sample",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -256,
+        128
+      ],
+      "id": "62c9bf0a-a187-49b4-ab10-96ce440bfd8c",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5aee443d-5055-490a-ba4c-6fc2ba400be7",
+              "name": "content",
+              "value": "# What is Ollama? Understanding how it works, main features and models  Ollama is an open-source tool that allows you to run large language models (LLMs) directly on your local machine. This makes it ideal for AI developers, researchers, and businesses prioritizing data control and privacy.  By running models locally, you maintain full data ownership and avoid the potential security risks associated with cloud storage. Offline AI tools like Ollama also help reduce latency and reliance on external servers, making them faster and more reliable.  This article will explore Ollama’s key features, supported models, and practical use cases. By the end, you’ll be able to determine if this LLM tool suits your AI-based projects and needs.  ## How Ollama works  Ollama creates an isolated environment to run LLMs locally on your system, which prevents any potential conflicts with other installed software. This environment already includes all the necessary components for deploying AI models, such as:  - **Model weights**. The pre-trained data that the model uses to function. - **Configuration files**. Settings that define how the model behaves. - **Necessary dependencies**. Libraries and tools that support the model’s execution.  To put it simply, first – you pull models from the Ollama library. Then, you run these models as-is or adjust parameters to customize them for specific tasks. After the setup, you can interact with the models by entering prompts, and they’ll generate the responses.  This advanced AI tool works best on [discrete graphical processing unit (GPU) systems](https://www.intel.com/content/www/us/en/support/articles/000057824/graphics.html). While you can run it on CPU-integrated GPUs, using dedicated compatible GPUs instead, like those from NVIDIA or AMD, will reduce processing times and ensure smoother AI interactions.  We recommend checking [Ollama’s official GitHub page](https://github.com/ollama/ollama/blob/main/docs/gpu.md) for GPU compatibility.  ## Key features of Ollama  Ollama offers several key features that make offline model management easier and enhance performance.  ### Local AI model management  Ollama grants you full control to download, update, and delete models easily on your system. This feature is valuable for developers and researchers who prioritize strict data security.  In addition to basic management, Ollama lets you track and control different model versions. This is essential in research and production environments, where you might need to revert to or test multiple model versions to see which generates the desired results.  ### Command-line and GUI options  Ollama mainly operates through a [command-line interface (CLI)](https://www.hostinger.com/tutorials/what-is-cli), giving you precise control over the models. The CLI allows for quick commands to pull, run, and manage models, which is ideal if you’re comfortable working in a terminal window.  If you’re interested in a command-line approach, feel free to check out our [Ollama CLI tutorial](https://www.hostinger.com/tutorials/ollama-cli-tutorial).  Ollama also supports third-party graphical user interface (GUI) tools, such as [Open WebUI](https://openwebui.com/), for those who prefer a more visual approach.  You can learn more about using a graphical interface in our [Ollama GUI guide.](https://www.hostinger.com/tutorials/ollama-gui-tutorial)  ### Multi-platform support  Another standout feature of Ollama is its broad support for various platforms, including macOS, Linux, and Windows.  This cross-platform compatibility ensures you can easily integrate Ollama into your existing workflows, regardless of your preferred operating system. However, note that Windows support is currently in preview.  Additionally, Ollama’s compatibility with Linux lets you [install it on a virtual private server (VPS)](https://www.hostinger.com/tutorials/how-to-install-ollama). Compared to running Ollama on local machines, using a VPS lets you access and manage models remotely, which is ideal for larger-scale projects or team collaboration.  ## Available models on Ollama  Ollama supports numerous ready-to-use and customizable [large language models](https://www.hostinger.com/tutorials/large-language-models) to meet your project’s specific requirements. Here are some of the most popular Ollama models:  Llama 3.2 is a versatile model for natural language processing (NLP) tasks, like text generation, summarization, and machine translation. Its ability to understand and generate human-like text makes it popular for developing chatbots, writing content, and building conversational AI systems.  You can fine-tune Llama 3.2 for specific industries and niche applications, such as customer service or product recommendations. With solid multilingual support, this model is also favored for building machine translation systems that are useful for global companies and multinational environments.  Mistral handles code generation and large-scale data analysis, making it ideal for developers working on AI-driven coding platforms. Its pattern recognition capabilities enable it to tackle complex programming tasks, automate repetitive coding processes, and identify bugs.  Software developers and researchers can customize Mistral to generate code for different programming languages. Additionally, its data processing ability makes it useful for managing large datasets in the finance, healthcare, and eCommerce sectors.  As the name suggests, Code Llama excels at programming-related tasks, such as writing and reviewing code. It automates coding workflows to boost productivity for software developers and engineers.  Code Llama integrates well with existing development environments, and you can tweak it to understand different coding styles or programming languages. As a result, it can handle more complex projects, such as API development and system optimization.  LLaVA is a [multimodal model](https://cloud.google.com/use-cases/multimodal-ai) capable of processing text and images, which is perfect for tasks that require visual data interpretation. It’s primarily used to generate accurate image captions, answer visual questions, and enhance user experiences through combined text and image analysis.  Industries like eCommerce and digital marketing benefit from LLaVA to analyze product images and generate relevant content. Researchers can also adjust the model to interpret medical images, such as X-rays and MRIs.  Phi-3 is designed for scientific and research-based applications. Its training on extensive academic and research datasets makes it particularly useful for tasks like literature reviews, data summarization, and scientific analysis.  Medicine, biology, and environmental science researchers can fine-tune Phi-3 to quickly analyze and interpret large volumes of scientific literature, extract key insights, or summarize complex data.  If you’re unsure which model to use, you can explore [Ollama’s model library](https://ollama.com/library), which provides detailed information about each model, including installation instructions, supported use cases, and customization options.  #### Suggested reading  For the best results when building advanced AI applications, consider combining LLMs with [generative AI](https://www.hostinger.com/tutorials/generative-ai) techniques. Learn more about it in our article.  ## Use cases for Ollama  Here are some examples of how Ollama can impact workflows and create innovative solutions.  **Creating local chatbots**  With Ollama, developers can create highly responsive AI-driven chatbots that run entirely on local servers, ensuring that customer interactions remain private.  Running chatbots locally lets businesses avoid the latency associated with cloud-based AI solutions, improving response times for end users. Industries like transportation and education can also fine-tune models to fit specific language or industry jargon.  **Conducting local research**  Universities and data scientists can leverage Ollama to conduct offline machine-learning research. This lets them experiment with datasets in privacy-sensitive environments, ensuring the work remains secure and is not exposed to external parties.  Ollama’s ability to run LLMs locally is also helpful in areas with limited or no internet access. Additionally, research teams can adapt models to analyze and summarize scientific literature or draw out important findings.  **Building privacy-focused AI applications**  Ollama provides an ideal solution for developing privacy-focused AI applications that are ideal for businesses handling sensitive information. For instance, legal firms can create software for contract analysis or legal research without compromising client information.  Running AI locally guarantees that all computations occur within the company’s infrastructure, helping businesses meet regulatory requirements for data protection, such as GDPR compliance, which mandates strict control over data handling.  **Integrating AI into existing platforms**  Ollama can easily integrate with existing software platforms, enabling businesses to include AI capabilities without overhauling their current systems.  For instance, companies using content management systems (CMSs) can integrate local models to improve content recommendations, automate editing processes, or suggest personalized content to engage users.  Another example is integrating Ollama into customer relationship management (CRM) systems to enhance automation and data analysis, ultimately improving decision-making and customer insights.  #### Suggested reading  Did you know that you can [create your own AI application, like ChatGPT](https://www.hostinger.com/tutorials/how-to-deploy-chatgpt-clone), using OpenAI API? Learn how to do so in our article.  ## Benefits of using Ollama  Ollama provides several advantages over cloud-based AI solutions, particularly for users prioritizing privacy and cost efficiency:  - **Enhanced privacy and data security**. Ollama keeps sensitive data on local machines, reducing the risk of exposure through third-party cloud providers. This is crucial for industries like legal firms, healthcare organizations, and financial institutions, where data privacy is a top priority. - **No reliance on cloud services**. Businesses maintain complete control over their infrastructure without relying on external cloud providers. This independence allows for greater scalability on local servers and ensures that all data remains within the organization’s control. - **Customization flexibility**. Ollama lets developers and researchers tweak models according to specific project requirements. This flexibility ensures better performance on tailored datasets, making it ideal for research or niche applications where a one-size-fits-all cloud solution may not be suitable. - **Offline access**. Running AI models locally means you can work without internet access. This is especially useful in environments with limited connectivity or for projects requiring strict control over data flow. - **Cost savings**. By eliminating the need for cloud infrastructure, you avoid recurring costs related to cloud storage, data transfer, and usage fees. While cloud infrastructure may be convenient, running models offline can lead to significant long-term savings, particularly for projects with consistent, heavy usage.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -32,
+        128
+      ],
+      "id": "644baa15-9062-4097-9b01-2f24ed091730",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -32,
+        320
+      ],
+      "id": "f21d6176-b616-47be-a9a0-e87c2495dd1f",
+      "name": "When chat message received",
+      "webhookId": "9f76c6bc-40e8-419f-a715-63d5eb6a234d"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "= Summarize this content in 3-5 clear bullet points:\n  \n  {{$json.content}}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        192,
+        224
+      ],
+      "id": "e3e9904d-a27d-4245-92f4-0918ad930cb1",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": "gemma2:2b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        272,
+        448
+      ],
+      "id": "4cb8652a-06ee-4e6b-a521-f7922fd64b7a",
+      "name": "Ollama Chat Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "UTJsPhetajaS17pP",
+          "name": "Ollama account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "When clicking ‘Execute workflow’": [
+      {
+        "json": {}
+      }
+    ]
+  },
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "31ab05a4-be55-460d-8956-4a4f835fa503",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7a3f4b30d139bb4d4da62ccf6bec8aefe503a6057c743693063b0411d7afe9d0"
+  },
+  "id": "OR3ObeakyycJ8Llm",
+  "tags": []
+}

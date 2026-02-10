@@ -1,0 +1,694 @@
+{
+  "name": "Monthly Bank Reconciliation - Truist to FreshBooks",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 5 * *"
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [250, 300],
+      "notes": "Runs monthly on the 5th at 9:00 AM EST"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Calculate previous month date range\nconst now = new Date();\nconst lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);\nconst startDate = new Date(lastMonth.getFullYear(), lastMonth.getMonth(), 1);\nconst endDate = new Date(lastMonth.getFullYear(), lastMonth.getMonth() + 1, 0);\n\n// Format as YYYY-MM-DD\nconst formatDate = (date) => {\n  const year = date.getFullYear();\n  const month = String(date.getMonth() + 1).padStart(2, '0');\n  const day = String(date.getDate()).padStart(2, '0');\n  return `${year}-${month}-${day}`;\n};\n\nreturn [{\n  json: {\n    startDate: formatDate(startDate),\n    endDate: formatDate(endDate),\n    monthName: lastMonth.toLocaleString('en-US', { month: 'long' }),\n    year: lastMonth.getFullYear(),\n    calculatedAt: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "calculate-date-range",
+      "name": "Calculate Date Range",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [450, 300],
+      "notes": "Calculate previous month's start and end dates"
+    },
+    {
+      "parameters": {
+        "resource": "transaction",
+        "operation": "getAll",
+        "accessToken": "={{$credentials.plaid.accessToken}}",
+        "startDate": "={{$node['Calculate Date Range'].json.startDate}}",
+        "endDate": "={{$node['Calculate Date Range'].json.endDate}}",
+        "additionalFields": {
+          "includePersonalFinanceCategory": true
+        }
+      },
+      "id": "fetch-plaid-transactions",
+      "name": "Fetch Truist Transactions (Plaid)",
+      "type": "n8n-nodes-plaid.plaid",
+      "typeVersion": 1,
+      "position": [650, 200],
+      "credentials": {
+        "plaidApi": {
+          "id": "1",
+          "name": "Plaid API"
+        }
+      },
+      "notes": "Fetch bank transactions via Plaid API"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.freshbooks.com/accounting/account/={{$credentials.freshbooks.accountId}}/expenses/expenses",
+        "authentication": "oAuth2",
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "search[date_min]",
+              "value": "={{$node['Calculate Date Range'].json.startDate}}"
+            },
+            {
+              "name": "search[date_max]",
+              "value": "={{$node['Calculate Date Range'].json.endDate}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fetch-freshbooks-expenses",
+      "name": "Fetch FreshBooks Expenses",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [650, 300],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "2",
+          "name": "FreshBooks OAuth2"
+        }
+      },
+      "notes": "Fetch existing expenses from FreshBooks"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.freshbooks.com/accounting/account/={{$credentials.freshbooks.accountId}}/other_incomes/other_incomes",
+        "authentication": "oAuth2",
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "search[date_min]",
+              "value": "={{$node['Calculate Date Range'].json.startDate}}"
+            },
+            {
+              "name": "search[date_max]",
+              "value": "={{$node['Calculate Date Range'].json.endDate}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fetch-freshbooks-income",
+      "name": "Fetch FreshBooks Income",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [650, 400],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "2",
+          "name": "FreshBooks OAuth2"
+        }
+      },
+      "notes": "Fetch existing income entries from FreshBooks"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://adsense.googleapis.com/v2/accounts/={{$credentials.googleAdsense.accountId}}/reports:generate",
+        "authentication": "oAuth2",
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "dateRange",
+              "value": "CUSTOM"
+            },
+            {
+              "name": "startDate.year",
+              "value": "={{$node['Calculate Date Range'].json.startDate.split('-')[0]}}"
+            },
+            {
+              "name": "startDate.month",
+              "value": "={{$node['Calculate Date Range'].json.startDate.split('-')[1]}}"
+            },
+            {
+              "name": "startDate.day",
+              "value": "={{$node['Calculate Date Range'].json.startDate.split('-')[2]}}"
+            },
+            {
+              "name": "endDate.year",
+              "value": "={{$node['Calculate Date Range'].json.endDate.split('-')[0]}}"
+            },
+            {
+              "name": "endDate.month",
+              "value": "={{$node['Calculate Date Range'].json.endDate.split('-')[1]}}"
+            },
+            {
+              "name": "endDate.day",
+              "value": "={{$node['Calculate Date Range'].json.endDate.split('-')[2]}}"
+            },
+            {
+              "name": "metrics",
+              "value": "ESTIMATED_EARNINGS"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fetch-adsense-earnings",
+      "name": "Fetch Google AdSense Earnings",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [650, 500],
+      "credentials": {
+        "googleOAuth2Api": {
+          "id": "3",
+          "name": "Google OAuth2"
+        }
+      },
+      "notes": "Fetch YouTube earnings from Google AdSense"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "multiplex",
+        "options": {}
+      },
+      "id": "merge-data",
+      "name": "Merge All Data",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [850, 300],
+      "notes": "Combine all fetched data streams"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Get data from all sources\nconst inputs = $input.all();\nconst dateRange = inputs[0].json;\n\n// Parse data from each source\nconst bankTransactions = inputs.find(i => i.node === 'Fetch Truist Transactions (Plaid)')?.json?.transactions || [];\nconst fbExpenses = inputs.find(i => i.node === 'Fetch FreshBooks Expenses')?.json?.response?.result?.expenses || [];\nconst fbIncome = inputs.find(i => i.node === 'Fetch FreshBooks Income')?.json?.response?.result?.other_income || [];\nconst adsenseData = inputs.find(i => i.node === 'Fetch Google AdSense Earnings')?.json?.rows || [];\n\n// ===============================\n// HELPER FUNCTIONS\n// ===============================\n\n// Levenshtein distance for fuzzy matching\nfunction levenshtein(a, b) {\n  const matrix = [];\n  for (let i = 0; i <= b.length; i++) matrix[i] = [i];\n  for (let j = 0; j <= a.length; j++) matrix[0][j] = j;\n  \n  for (let i = 1; i <= b.length; i++) {\n    for (let j = 1; j <= a.length; j++) {\n      if (b.charAt(i - 1) === a.charAt(j - 1)) {\n        matrix[i][j] = matrix[i - 1][j - 1];\n      } else {\n        matrix[i][j] = Math.min(\n          matrix[i - 1][j - 1] + 1,\n          matrix[i][j - 1] + 1,\n          matrix[i - 1][j] + 1\n        );\n      }\n    }\n  }\n  return matrix[b.length][a.length];\n}\n\n// Normalize strings for comparison\nfunction normalize(str) {\n  if (!str) return '';\n  return str.toLowerCase().trim().replace(/[^a-z0-9]/g, '');\n}\n\n// Calculate confidence score (0-100)\nfunction calculateConfidence(bankTx, fbExpense) {\n  let score = 0;\n\n  // Amount match (40 points)\n  const amountDiff = Math.abs(Math.abs(bankTx.amount) - Math.abs(parseFloat(fbExpense.amount.amount)));\n  if (amountDiff <= 0.01) score += 40;\n  else if (amountDiff <= 1) score += 30;\n  else if (amountDiff <= 5) score += 20;\n\n  // Date proximity (30 points)\n  const dateDiff = Math.abs(new Date(bankTx.date) - new Date(fbExpense.date));\n  const daysDiff = dateDiff / (1000 * 60 * 60 * 24);\n  if (daysDiff <= 1) score += 30;\n  else if (daysDiff <= 3) score += 20;\n  else if (daysDiff <= 5) score += 10;\n\n  // Vendor name similarity (30 points)\n  const bankName = normalize(bankTx.name);\n  const fbVendor = normalize(fbExpense.vendor);\n  const distance = levenshtein(bankName, fbVendor);\n  const maxLength = Math.max(bankName.length, fbVendor.length);\n  const similarity = maxLength > 0 ? 1 - (distance / maxLength) : 0;\n  score += Math.round(similarity * 30);\n\n  return score;\n}\n\n// ===============================\n// TRANSACTION MATCHING\n// ===============================\n\nconst matched = [];\nconst unmatched = [];\nconst needsReview = [];\nconst fbExpensesUsed = new Set();\n\n// Filter only expense transactions (negative amounts from bank)\nconst expenses = bankTransactions.filter(tx => \n  !tx.pending && \n  tx.amount < 0 // Expenses are negative in Plaid\n);\n\nfor (const bankTx of expenses) {\n  let bestMatch = null;\n  let bestScore = 0;\n\n  for (const fbExpense of fbExpenses) {\n    // Skip if already matched\n    if (fbExpensesUsed.has(fbExpense.expenseid)) continue;\n\n    const score = calculateConfidence(bankTx, fbExpense);\n    if (score > bestScore) {\n      bestScore = score;\n      bestMatch = fbExpense;\n    }\n  }\n\n  const absoluteAmount = Math.abs(bankTx.amount);\n\n  if (bestScore >= 80) {\n    // High confidence match\n    fbExpensesUsed.add(bestMatch.expenseid);\n    matched.push({\n      bankTransaction: bankTx,\n      fbExpense: bestMatch,\n      confidence: bestScore,\n      action: 'matched',\n      amountDiff: absoluteAmount - parseFloat(bestMatch.amount.amount)\n    });\n  } else if (bestScore >= 60 && absoluteAmount < 100) {\n    // Medium confidence, low amount - auto-create\n    unmatched.push({\n      bankTransaction: bankTx,\n      confidence: bestScore,\n      action: 'create',\n      suggestedCategory: bankTx.personal_finance_category?.primary || 'Other'\n    });\n  } else {\n    // Low confidence or high amount - needs review\n    needsReview.push({\n      bankTransaction: bankTx,\n      confidence: bestScore,\n      bestMatch: bestMatch,\n      action: 'review',\n      reason: absoluteAmount >= 100 ? 'High amount' : 'Low confidence'\n    });\n  }\n}\n\n// ===============================\n// INCOME PROCESSING\n// ===============================\n\nconst deposits = bankTransactions.filter(tx => \n  !tx.pending && \n  tx.amount > 0 // Deposits are positive\n);\n\nconst adsenseEarnings = adsenseData.length > 0 ? parseFloat(adsenseData[0].cells[0].value) : 0;\n\nconst incomeToCreate = [];\n\nfor (const deposit of deposits) {\n  const amount = deposit.amount;\n  const description = deposit.name.toLowerCase();\n\n  // Check if it's a YouTube payment (match AdSense amount)\n  if (Math.abs(amount - adsenseEarnings) < 0.01) {\n    incomeToCreate.push({\n      source: 'YouTube AdSense',\n      amount: amount,\n      date: deposit.date,\n      description: `YouTube earnings for ${dateRange.monthName} ${dateRange.year}`\n    });\n  }\n  // Check if it's an affiliate payment\n  else if (description.includes('affiliate') || description.includes('commission')) {\n    incomeToCreate.push({\n      source: 'Affiliate',\n      amount: amount,\n      date: deposit.date,\n      description: deposit.name\n    });\n  }\n  // Other income\n  else {\n    incomeToCreate.push({\n      source: 'Other',\n      amount: amount,\n      date: deposit.date,\n      description: deposit.name\n    });\n  }\n}\n\n// ===============================\n// SUMMARY STATISTICS\n// ===============================\n\nconst summary = {\n  // Transaction counts\n  totalBankTransactions: bankTransactions.length,\n  totalExpenses: expenses.length,\n  totalDeposits: deposits.length,\n  \n  // Matching results\n  matchedCount: matched.length,\n  unmatchedCount: unmatched.length,\n  needsReviewCount: needsReview.length,\n  \n  // Income\n  youtubeIncome: adsenseEarnings,\n  totalIncome: deposits.reduce((sum, d) => sum + d.amount, 0),\n  \n  // Expenses\n  totalExpensesAmount: expenses.reduce((sum, e) => sum + Math.abs(e.amount), 0),\n  \n  // Net\n  netIncome: deposits.reduce((sum, d) => sum + d.amount, 0) - \n             expenses.reduce((sum, e) => sum + Math.abs(e.amount), 0),\n  \n  // Date range\n  period: `${dateRange.monthName} ${dateRange.year}`,\n  startDate: dateRange.startDate,\n  endDate: dateRange.endDate\n};\n\n// ===============================\n// RETURN RESULTS\n// ===============================\n\nreturn [{\n  json: {\n    summary,\n    matched,\n    unmatched,\n    needsReview,\n    incomeToCreate,\n    dateRange,\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "matching-engine",
+      "name": "Transaction Matching Engine",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1050, 300],
+      "notes": "Intelligent transaction matching with fuzzy logic"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "unmatched-data",
+              "name": "data",
+              "value": "={{$json.unmatched}}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-unmatched",
+      "name": "Set Unmatched Transactions",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [1250, 200],
+      "notes": "Prepare unmatched transactions for creation"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "review-data",
+              "name": "data",
+              "value": "={{$json.needsReview}}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-review",
+      "name": "Set Review Items",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [1250, 300],
+      "notes": "Prepare items needing manual review"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "income-data",
+              "name": "data",
+              "value": "={{$json.incomeToCreate}}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-income",
+      "name": "Set Income Items",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [1250, 400],
+      "notes": "Prepare income entries for creation"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Split unmatched array into individual items\nconst data = $input.item.json.data;\nreturn data.map(item => ({ json: item }));"
+      },
+      "id": "split-unmatched",
+      "name": "Split Unmatched",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1450, 200],
+      "notes": "Split array into individual items"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.freshbooks.com/accounting/account/={{$credentials.freshbooks.accountId}}/expenses/expenses",
+        "authentication": "oAuth2",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"expense\": {\n    \"date\": \"{{$json.bankTransaction.date}}\",\n    \"vendor\": \"{{$json.bankTransaction.name}}\",\n    \"amount\": {\n      \"amount\": \"{{Math.abs($json.bankTransaction.amount).toFixed(2)}}\"\n    },\n    \"categoryid\": \"{{$json.suggestedCategory}}\",\n    \"notes\": \"Auto-imported from bank statement (Confidence: {{$json.confidence}}%)\"\n  }\n}",
+        "options": {}
+      },
+      "id": "create-freshbooks-expense",
+      "name": "Create FreshBooks Expense",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1650, 200],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "2",
+          "name": "FreshBooks OAuth2"
+        }
+      },
+      "notes": "Create new expense in FreshBooks"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Split income array into individual items\nconst data = $input.item.json.data;\nreturn data.map(item => ({ json: item }));"
+      },
+      "id": "split-income",
+      "name": "Split Income",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1450, 400],
+      "notes": "Split array into individual items"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.freshbooks.com/accounting/account/={{$credentials.freshbooks.accountId}}/other_incomes/other_incomes",
+        "authentication": "oAuth2",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"other_income\": {\n    \"date\": \"{{$json.date}}\",\n    \"source\": \"{{$json.source}}\",\n    \"amount\": {\n      \"amount\": \"{{$json.amount.toFixed(2)}}\"\n    },\n    \"notes\": \"{{$json.description}}\"\n  }\n}",
+        "options": {}
+      },
+      "id": "create-freshbooks-income",
+      "name": "Create FreshBooks Income",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1650, 400],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "2",
+          "name": "FreshBooks OAuth2"
+        }
+      },
+      "notes": "Create income entry in FreshBooks"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "multiplex",
+        "options": {}
+      },
+      "id": "merge-results",
+      "name": "Merge Results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [1850, 300],
+      "notes": "Combine all processing results"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Get the original matching results\nconst originalData = $('Transaction Matching Engine').first().json;\n\n// Calculate expenses by category (simplified - you'd map to actual Google Sheet categories)\nconst categoryTotals = {\n  software: 0,\n  services: 0,\n  marketing: 0,\n  other: 0\n};\n\n// This is a simplified version - you'd need actual category mapping\nfor (const item of originalData.unmatched) {\n  const category = item.suggestedCategory.toLowerCase();\n  const amount = Math.abs(item.bankTransaction.amount);\n  \n  if (category.includes('software') || category.includes('subscription')) {\n    categoryTotals.software += amount;\n  } else if (category.includes('service')) {\n    categoryTotals.services += amount;\n  } else if (category.includes('marketing') || category.includes('advertising')) {\n    categoryTotals.marketing += amount;\n  } else {\n    categoryTotals.other += amount;\n  }\n}\n\nconst summary = originalData.summary;\nconst dateRange = originalData.dateRange;\n\nreturn [{\n  json: {\n    // Data for Google Sheets row\n    period: `${dateRange.monthName} ${dateRange.year}`,\n    totalIncome: summary.totalIncome.toFixed(2),\n    youtubeIncome: summary.youtubeIncome.toFixed(2),\n    affiliateIncome: (summary.totalIncome - summary.youtubeIncome).toFixed(2),\n    softwareExpenses: categoryTotals.software.toFixed(2),\n    servicesExpenses: categoryTotals.services.toFixed(2),\n    marketingExpenses: categoryTotals.marketing.toFixed(2),\n    otherExpenses: categoryTotals.other.toFixed(2),\n    totalExpenses: summary.totalExpensesAmount.toFixed(2),\n    netIncome: summary.netIncome.toFixed(2),\n    reconciledDate: new Date().toISOString().split('T')[0],\n    \n    // Additional data for email report\n    summary: summary,\n    needsReview: originalData.needsReview,\n    dateRange: dateRange\n  }\n}];"
+      },
+      "id": "prepare-sheet-data",
+      "name": "Prepare Google Sheet Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [2050, 300],
+      "notes": "Calculate totals and prepare data for Google Sheets"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{$credentials.googleSheets.sheetId}}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Period": "={{$json.period}}",
+            "Total Income": "={{$json.totalIncome}}",
+            "YouTube Income": "={{$json.youtubeIncome}}",
+            "Affiliate Income": "={{$json.affiliateIncome}}",
+            "Software Expenses": "={{$json.softwareExpenses}}",
+            "Services Expenses": "={{$json.servicesExpenses}}",
+            "Marketing Expenses": "={{$json.marketingExpenses}}",
+            "Other Expenses": "={{$json.otherExpenses}}",
+            "Total Expenses": "={{$json.totalExpenses}}",
+            "Net Income": "={{$json.netIncome}}",
+            "Reconciled Date": "={{$json.reconciledDate}}"
+          }
+        },
+        "options": {}
+      },
+      "id": "update-google-sheet",
+      "name": "Update Google Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [2250, 300],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "3",
+          "name": "Google Sheets OAuth2"
+        }
+      },
+      "notes": "Append monthly summary to accountant's Google Sheet"
+    },
+    {
+      "parameters": {
+        "functionCode": "const data = $json;\nconst summary = data.summary;\nconst needsReview = data.needsReview || [];\nconst dateRange = data.dateRange;\n\nconst html = `\n<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body {\n      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;\n      line-height: 1.6;\n      color: #333;\n      max-width: 800px;\n      margin: 0 auto;\n      padding: 20px;\n    }\n    .header {\n      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\n      color: white;\n      padding: 30px;\n      border-radius: 10px;\n      margin-bottom: 30px;\n    }\n    .header h1 {\n      margin: 0;\n      font-size: 28px;\n    }\n    .summary-box {\n      background: #f8f9fa;\n      border-left: 4px solid #667eea;\n      padding: 20px;\n      margin: 20px 0;\n      border-radius: 5px;\n    }\n    .metric {\n      display: flex;\n      justify-content: space-between;\n      padding: 10px 0;\n      border-bottom: 1px solid #e0e0e0;\n    }\n    .metric:last-child {\n      border-bottom: none;\n    }\n    .metric-label {\n      font-weight: 600;\n      color: #666;\n    }\n    .metric-value {\n      font-size: 20px;\n      font-weight: bold;\n      color: #2c3e50;\n    }\n    .metric-value.positive {\n      color: #27ae60;\n    }\n    .section {\n      margin: 30px 0;\n    }\n    .alert {\n      background: #fff3cd;\n      border-left: 4px solid #ffc107;\n      padding: 15px;\n      margin: 20px 0;\n      border-radius: 5px;\n    }\n    .success {\n      background: #d4edda;\n      border-left: 4px solid #28a745;\n      padding: 15px;\n      margin: 20px 0;\n      border-radius: 5px;\n    }\n    .review-item {\n      background: white;\n      border: 1px solid #ddd;\n      padding: 10px;\n      margin: 10px 0;\n      border-radius: 5px;\n    }\n    .btn {\n      display: inline-block;\n      padding: 12px 24px;\n      background: #667eea;\n      color: white;\n      text-decoration: none;\n      border-radius: 5px;\n      margin: 10px 10px 10px 0;\n    }\n    .footer {\n      margin-top: 40px;\n      padding-top: 20px;\n      border-top: 1px solid #e0e0e0;\n      color: #666;\n      font-size: 14px;\n    }\n  </style>\n</head>\n<body>\n  <div class=\"header\">\n    <h1>✅ Monthly Reconciliation Complete</h1>\n    <p style=\"margin: 10px 0 0 0; font-size: 18px;\">${dateRange.monthName} ${dateRange.year}</p>\n  </div>\n\n  <div class=\"summary-box\">\n    <h2 style=\"margin-top: 0;\">📊 Financial Summary</h2>\n    \n    <div class=\"metric\">\n      <span class=\"metric-label\">Total Income</span>\n      <span class=\"metric-value positive\">$${summary.totalIncome.toFixed(2)}</span>\n    </div>\n    \n    <div style=\"padding-left: 20px; font-size: 14px; color: #666;\">\n      <div class=\"metric\" style=\"border: none;\">\n        <span>YouTube AdSense</span>\n        <span>$${summary.youtubeIncome.toFixed(2)}</span>\n      </div>\n      <div class=\"metric\" style=\"border: none;\">\n        <span>Other Income</span>\n        <span>$${(summary.totalIncome - summary.youtubeIncome).toFixed(2)}</span>\n      </div>\n    </div>\n\n    <div class=\"metric\">\n      <span class=\"metric-label\">Total Expenses</span>\n      <span class=\"metric-value\">$${summary.totalExpensesAmount.toFixed(2)}</span>\n    </div>\n\n    <div class=\"metric\">\n      <span class=\"metric-label\">Net Income</span>\n      <span class=\"metric-value positive\">$${summary.netIncome.toFixed(2)}</span>\n    </div>\n  </div>\n\n  ${summary.matchedCount > 0 ? `\n  <div class=\"success\">\n    <h3 style=\"margin-top: 0;\">✅ Processing Results</h3>\n    <ul style=\"margin: 10px 0;\">\n      <li><strong>${summary.totalBankTransactions}</strong> bank transactions processed</li>\n      <li><strong>${summary.matchedCount}</strong> expenses automatically matched</li>\n      <li><strong>${summary.unmatchedCount}</strong> new expenses created</li>\n      <li><strong>${summary.needsReviewCount}</strong> items flagged for review</li>\n    </ul>\n  </div>\n  ` : ''}\n\n  ${needsReview.length > 0 ? `\n  <div class=\"alert\">\n    <h3 style=\"margin-top: 0;\">📋 Action Required: ${needsReview.length} Items Need Review</h3>\n    <p>The following transactions require your attention:</p>\n    ${needsReview.map(item => `\n      <div class=\"review-item\">\n        <strong>$${Math.abs(item.bankTransaction.amount).toFixed(2)}</strong> - \n        ${item.bankTransaction.name}<br>\n        <small style=\"color: #666;\">\n          Date: ${item.bankTransaction.date} | \n          Reason: ${item.reason} | \n          Confidence: ${item.confidence}%\n        </small>\n      </div>\n    `).join('')}\n  </div>\n  ` : '<div class=\"success\"><h3 style=\"margin-top: 0;\">🎉 Perfect Match!</h3><p>All transactions were successfully matched. No manual review needed.</p></div>'}\n\n  <div class=\"section\">\n    <h3>🔗 Quick Access</h3>\n    <a href=\"https://my.freshbooks.com\" class=\"btn\">Open FreshBooks</a>\n    <a href=\"https://docs.google.com/spreadsheets\" class=\"btn\">View Accountant Sheet</a>\n  </div>\n\n  <div class=\"footer\">\n    <p><strong>Automated Bank Reconciliation</strong></p>\n    <p>Reconciliation completed on ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} at ${new Date().toLocaleTimeString('en-US')}</p>\n    <p style=\"font-size: 12px; color: #999;\">This report was automatically generated by your n8n workflow.</p>\n  </div>\n</body>\n</html>\n`;\n\nconst subject = needsReview.length > 0 \n  ? `⚠️ Reconciliation Complete - ${needsReview.length} Items Need Review - ${dateRange.monthName} ${dateRange.year}`\n  : `✅ Reconciliation Complete - ${dateRange.monthName} ${dateRange.year}`;\n\nreturn [{\n  json: {\n    subject,\n    html,\n    to: 'mike@mikemurphy.co',\n    from: 'automation@mikemurphy.co',\n    summary: summary,\n    needsReviewCount: needsReview.length\n  }\n}];"
+      },
+      "id": "generate-email",
+      "name": "Generate Email Report",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [2450, 300],
+      "notes": "Build HTML email report with summary and review items"
+    },
+    {
+      "parameters": {
+        "fromEmail": "automation@mikemurphy.co",
+        "toEmail": "={{$json.to}}",
+        "subject": "={{$json.subject}}",
+        "emailFormat": "html",
+        "message": "={{$json.html}}",
+        "options": {}
+      },
+      "id": "send-email",
+      "name": "Send Email Report",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [2650, 300],
+      "credentials": {
+        "smtp": {
+          "id": "4",
+          "name": "SMTP Account"
+        }
+      },
+      "notes": "Send reconciliation report to Mike"
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Calculate Date Range",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Date Range": {
+      "main": [
+        [
+          {
+            "node": "Fetch Truist Transactions (Plaid)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch FreshBooks Expenses",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch FreshBooks Income",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Google AdSense Earnings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Truist Transactions (Plaid)": {
+      "main": [
+        [
+          {
+            "node": "Merge All Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch FreshBooks Expenses": {
+      "main": [
+        [
+          {
+            "node": "Merge All Data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Fetch FreshBooks Income": {
+      "main": [
+        [
+          {
+            "node": "Merge All Data",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Fetch Google AdSense Earnings": {
+      "main": [
+        [
+          {
+            "node": "Merge All Data",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Merge All Data": {
+      "main": [
+        [
+          {
+            "node": "Transaction Matching Engine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transaction Matching Engine": {
+      "main": [
+        [
+          {
+            "node": "Set Unmatched Transactions",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Set Review Items",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Set Income Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Unmatched Transactions": {
+      "main": [
+        [
+          {
+            "node": "Split Unmatched",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Review Items": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Income Items": {
+      "main": [
+        [
+          {
+            "node": "Split Income",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Unmatched": {
+      "main": [
+        [
+          {
+            "node": "Create FreshBooks Expense",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create FreshBooks Expense": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Split Income": {
+      "main": [
+        [
+          {
+            "node": "Create FreshBooks Income",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create FreshBooks Income": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge Results": {
+      "main": [
+        [
+          {
+            "node": "Prepare Google Sheet Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Google Sheet Data": {
+      "main": [
+        [
+          {
+            "node": "Update Google Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Google Sheet": {
+      "main": [
+        [
+          {
+            "node": "Generate Email Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Email Report": {
+      "main": [
+        [
+          {
+            "node": "Send Email Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "error-handler-workflow"
+  },
+  "versionId": "1",
+  "meta": {
+    "instanceId": "your-n8n-instance-id"
+  },
+  "tags": [
+    {
+      "name": "accounting"
+    },
+    {
+      "name": "automation"
+    },
+    {
+      "name": "reconciliation"
+    }
+  ]
+}
